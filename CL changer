@@ -1,0 +1,63 @@
+import re
+from docx import Document
+from datetime import date
+import urllib.request
+import comtypes.client
+
+
+def replace(doc_obj, regex, replace):
+    for p in doc_obj.paragraphs:
+        if regex.search(p.text):
+            inline = p.runs
+            # Loop added to work with runs (strings with same style)
+            for i in range(len(inline)):
+                if regex.search(inline[i].text):
+                    text = regex.sub(replace, inline[i].text)
+                    inline[i].text = text
+
+    for table in doc_obj.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                replace(cell, regex, replace)
+
+document = Document("cl.docx")
+today = date.today()
+d = today.strftime("%m/%d/%y")
+company = "failed"
+locate = "failed"
+
+# enter a linkedin url
+site = input("Enter url here : ")
+with urllib.request.urlopen(site) as response:
+    html = response.read()
+f = str(html)
+cname = re.search('"name":"(.+?)"', f)
+cloca = re.search('class="topbar__company-info-meta badge-list-item">(.+?)</span>', f)
+if cname:
+    company = cname.group(1)
+if cloca:
+    locate = cloca.group(1)
+
+# change the text to be replaced in the cover letter into these
+date = re.compile("todaydate")
+name = re.compile("Cname")
+location = re.compile("Loca")
+
+replace(document, date, d)
+replace(document, name, company)
+replace(document, location, locate)
+document.save('result.docx')
+
+# converting to pdf
+wdFormatPDF = 17
+
+# change to your own file path
+in_file = 'C:/Users/jason/Desktop/Python/result.docx'
+out_file = 'C:/Users/jason/Desktop/coverletter-'
+out_file += str(company)
+
+word = comtypes.client.CreateObject('Word.Application')
+doc = word.Documents.Open(in_file)
+doc.SaveAs(out_file, FileFormat=wdFormatPDF)
+doc.Close()
+word.Quit()
