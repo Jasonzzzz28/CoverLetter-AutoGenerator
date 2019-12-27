@@ -54,7 +54,9 @@ wdFormatPDF = 17
 # change to your own file path
 in_file = 'C:/Users/jason/Desktop/Python/result.docx'
 out_file = 'C:/Users/jason/Desktop/coverletter-'
-out_file += str(company)
+word1 = re.sub(r"\s+", "", company)
+out_file += word1
+out_file += ".pdf"
 
 word = comtypes.client.CreateObject('Word.Application')
 doc = word.Documents.Open(in_file)
